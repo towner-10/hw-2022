@@ -1,8 +1,7 @@
 import { GetServerSideProps } from "next";
 import Head from "next/head";
-import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
 import {
   RecommendationProps,
   Recommendations,
@@ -63,11 +62,13 @@ export default function Article(props: ArticleProps) {
       </Head>
       <div className="bg-cornsilk-400 flex flex-col items-center justify-center pt-4">
         <>
-          <span className="text-2xl h-12">WikiNow</span>
+          <Link href="/" className="text-2xl h-12 underline transition-all duration-75 hover:text-patrick-blue-400 hover:scale-110">
+            <h1>WikiNow</h1>
+          </Link>
 
           <div className="m-4">
             <h1 className="text-3xl h-16">{props.title}</h1>
-            <div className="bg-cornsilk-200 rounded-md p-2 ">
+            <div className="bg-cornsilk-200 rounded-md p-2 text-lg shadow-lg">
               {props.summary}
             </div>
           </div>
@@ -76,16 +77,18 @@ export default function Article(props: ArticleProps) {
             return <WikihowStep {...data} key={`wkhw-${ind}`} />;
           })}
 
-          <Recommendations
-            title="You Might Also Like"
-            key="1"
-            recommendations={props.recommendations[0]}
-          />
-          <Recommendations
-            title="Featured Articles"
-            key="2"
-            recommendations={props.recommendations[1]}
-          />
+          <div className="flex flex-row justify-evenly w-1/2 pb-4">
+            <Recommendations
+              title="You Might Also Like"
+              key="1"
+              recommendations={props.recommendations[0]}
+            />
+            <Recommendations
+              title="Featured Articles"
+              key="2"
+              recommendations={props.recommendations[1]}
+            />
+          </div>
         </>
       </div>
     </>
