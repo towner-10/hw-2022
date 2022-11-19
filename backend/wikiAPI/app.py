@@ -34,7 +34,7 @@ def get_tutorial():
     response = co.generate(
         model='xlarge',
         prompt=prompt,
-        max_tokens=500,
+        max_tokens=300,
         temperature=0.9,
         k=0,
         p=1,
