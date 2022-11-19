@@ -1,6 +1,7 @@
 import Head from "next/head";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import { useEffect } from "react";
 import { WikihowStep, WikihowStepProps } from "../../components/wikihow-step";
 
 const susData: WikihowStepProps[] = [
@@ -29,20 +30,22 @@ export default function Home() {
 
   const { articleId } = router.query;
 
+  if (!articleId) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <>
       <Head>
-        <title>WikiNow - {articleId}</title>
+        <title>WikiNow - {articleId[0]}</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="bg-cornsilk-400 w-screen flex flex-col items-center justify-center">
+      <div className="bg-cornsilk-400 flex flex-col items-center justify-center">
         <>
-          <h1 className="text-3xl">WikiNow</h1>
-          <>
-            {susData.map((data, ind) => {
-              return <WikihowStep {...data} key={`wkhw-${ind}`} />;
-            })}
-          </>
+          <h1 className="text-3xl h-16">WikiNow</h1>
+          {susData.map((data, ind) => {
+            return <WikihowStep {...data} key={`wkhw-${ind}`} />;
+          })}
         </>
       </div>
     </>
