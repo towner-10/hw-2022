@@ -10,7 +10,7 @@ export interface RecommendationProps {
 
 interface RecommendationsProps {
   title: string;
-  key: string;
+  key?: string;
   recommendations: RecommendationProps[];
 }
 

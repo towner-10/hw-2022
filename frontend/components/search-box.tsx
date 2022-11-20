@@ -6,8 +6,10 @@ export const SearchBox = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  const onSubmit = (query: string) => {
-    router.push(`/article/${encodeURIComponent(query)}`);
+  const onSubmit = async (query: string) => {
+    let res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/new-guide?prompt=${encodeURIComponent(query)}`);
+    let data = await res.json();
+    router.push(`/article/${data.id}`);
   };
 
   return (
