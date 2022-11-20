@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, send_file
 import json
 from flask_cors import CORS
 import os
@@ -46,14 +46,16 @@ def get_guide(id):
 
 @app.get('/api/guide/<id>/<image>')
 def get_image(id, image):
-    path = os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id}\\images\\${image}')
+    path = os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id}\\images\\{image}')
     if not os.path.exists(path):
-        return {
-            'status': 404,
-            'error': 'Image not found'
-        }
+        path = os.listdir(os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id}\\images'))[0]
+        if not os.path.exists(path):
+            return {
+                'status': 404,
+                'error': 'Image not found'
+            }
 
-    return app.send_static_file(path)
+    return send_file(path, mimetype='image/png')
 
 
 if __name__ == '__main__':

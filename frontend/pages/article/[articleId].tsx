@@ -9,36 +9,6 @@ import {
 } from "../../components/recommendations";
 import { WikihowStep, WikihowStepProps } from "../../components/wikihow-step";
 
-const susData: WikihowStepProps[] = [
-  {
-    stepNum: 1,
-    title: "Stay calm, even if your relatives are getting excited.",
-    boldDesc: "If you feel yourself getting worked up, take a breather.",
-    restOfDesc:
-      "Try not to let your emotions take over, even though it might be tough. Take some deep breaths in through your nose and out through your mouth as you count to 10.[1] The calmer you are, the more you’ll be able to handle a difficult family member who is trying to get you worked up. \nIf you can’t stay calm, it might be time to leave the situation. Step outside or into the other room to gather your thoughts and collect yourself.",
-    imageUrl:
-      "https://www.wikihow.com/images/thumb/2/2f/Be-Diplomatic-with-Family-Step-1.jpg/v4-460px-Be-Diplomatic-with-Family-Step-1.jpg.webp",
-  },
-  {
-    stepNum: 2,
-    title: "Stay calm, even if your relatives are getting excited.",
-    boldDesc: "If you feel yourself getting worked up, take a breather.",
-    restOfDesc:
-      "Try not to let your emotions take over, even though it might be tough. Take some deep breaths in through your nose and out through your mouth as you count to 10.[1] The calmer you are, the more you’ll be able to handle a difficult family member who is trying to get you worked up. \nIf you can’t stay calm, it might be time to leave the situation. Step outside or into the other room to gather your thoughts and collect yourself.",
-    imageUrl:
-      "https://www.wikihow.com/images/thumb/2/2f/Be-Diplomatic-with-Family-Step-1.jpg/v4-460px-Be-Diplomatic-with-Family-Step-1.jpg.webp",
-  },
-  {
-    stepNum: 3,
-    title: "Stay calm, even if your relatives are getting excited.",
-    boldDesc: "If you feel yourself getting worked up, take a breather.",
-    restOfDesc:
-      "Try not to let your emotions take over, even though it might be tough. Take some deep breaths in through your nose and out through your mouth as you count to 10.[1] The calmer you are, the more you’ll be able to handle a difficult family member who is trying to get you worked up. \nIf you can’t stay calm, it might be time to leave the situation. Step outside or into the other room to gather your thoughts and collect yourself.",
-    imageUrl:
-      "https://www.wikihow.com/images/thumb/2/2f/Be-Diplomatic-with-Family-Step-1.jpg/v4-460px-Be-Diplomatic-with-Family-Step-1.jpg.webp",
-  },
-];
-
 const recs: RecommendationProps[][] = [
   [
     {
@@ -93,11 +63,19 @@ interface GuideReturnResponse {
     [key: string]: string;
   };
   paragraphs: {
+    [key: string]: {
+      [key: string]: string;
+    };
+  };
+  parts: {
     [key: string]: string;
   };
   steps: {
-    [key: string]: string;
+    [key: string]: {
+      [key: string]: string;
+    };
   };
+  finished: boolean;
 }
 
 interface ArticleProps {
@@ -105,55 +83,88 @@ interface ArticleProps {
   summary: string;
   sections: WikihowStepProps[][];
   recommendations: RecommendationProps[][];
+  finished: boolean;
 }
 
-const processGuideReturnResponse = (res: GuideReturnResponse): ArticleProps => {
-  const sections: WikihowStepProps[][] = Object.entries(res.steps).map(
-    ([sectionKey, sectionSteps]) => {
-      const steps = Object.entries(sectionSteps).map(([stepKey, stepValue]) => {
+const processGuideReturnResponse = (res: GuideReturnResponse, id: string): ArticleProps => {
+  const sections: WikihowStepProps[][] = Object.entries(res.steps).map(([sectionKey, sectionSteps]) => {
+    const steps = Object.entries(sectionSteps).map(([stepKey, stepValue]) => {
+      if (res.finished) {
+        if (res.paragraphs[sectionKey] !== undefined) {
+          const image_file = res.images[stepKey] || "output_0.png";
+          if (res.paragraphs[sectionKey][stepKey] !== undefined) {
+            return {
+              section: `${sectionKey}.${stepKey}`,
+              sectionTitle: stepValue,
+              paragraph: res.paragraphs[sectionKey][stepKey],
+              imageUrl: `${process.env.NEXT_PUBLIC_API_URL}/api/guide/${id}/${image_file}`,
+            };
+          } else {
+            console.log(`No paragraph for ${sectionKey}.${stepKey}`);
+            return {
+              display: false,
+              section: `${sectionKey}.${stepKey}`,
+              sectionTitle: stepValue,
+              paragraph: "",
+              imageUrl: `${process.env.NEXT_PUBLIC_API_URL}/api/guide/${id}/${image_file}`,
+            }
+          }
+        }
+        const image_file = res.images[stepKey] || "output_0.png";
         return {
-          stepNum: stepKey,
-          title: stepValue,
+          display: false,
+          section: `${sectionKey}.${stepKey}`,
           sectionTitle: stepValue,
-          restOfDesc: "",
-          imageUrl: res.images[stepKey],
-        };
-      });
+          paragraph: "",
+          imageUrl: `${process.env.NEXT_PUBLIC_API_URL}/api/guide/${id}/${image_file}`,
+        }
+      } else {
+        if (res.paragraphs[sectionKey] !== undefined) {
+          return {
+            section: `${sectionKey}.${stepKey}`,
+            sectionTitle: stepValue,
+            paragraph: res.paragraphs[sectionKey][stepKey],
+            imageUrl: "",
+          }
+        }
+        return {
+          section: `${sectionKey}.${stepKey}`,
+          sectionTitle: stepValue,
+          paragraph: "",
+          imageUrl: "",
+        }
+      }
+    });
 
-      return steps;
-    }
+    return steps;
+  }
   );
-
-  // TODO: Uncomment
-  // const { title, summary } = res;
-
-  // TODO: remove this hardcoded stuff
-  const { title } = res;
+  const { title, finished } = res;
   const recommendations = recs;
   const summary = "This is a summary";
 
-  return { title, summary, sections, recommendations };
+  return { title, summary, sections, recommendations, finished };
 };
 
 export default function Article() {
   const router = useRouter();
 
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
-  const [data, setData] = useState<any | undefined>(undefined);
+  const [data, setData] = useState<ArticleProps | undefined>(undefined);
   const { articleId } = router.query;
 
   useEffect(() => {
     intervalRef.current = setInterval(() => {
-      console.log("interval run");
+      console.log("Fetching data...");
       if (articleId && !data) {
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/guide/${articleId}`)
           .then((res) => res.json())
           .then((json) => {
             if (json.status === 200) {
               console.log(json);
-              if (json.reponse) clearInterval(intervalRef.current);
-
-              setData(processGuideReturnResponse(json.response));
+              console.log(json.response.finished);
+              if (json.response && json.response.finished == true) clearInterval(intervalRef.current);
+              setData(processGuideReturnResponse(json.response, articleId as string));
             }
           });
       }
@@ -163,17 +174,21 @@ export default function Article() {
   }, [articleId]);
 
   useEffect(() => {
-    if (data) {
+    if (data?.finished) {
       clearInterval(intervalRef.current);
     }
   }, [data]);
 
   if (!articleId) {
-    return (
-      <div className="bg-cornsilk-400 flex flex-col items-center justify-center pt-4">
-        <h1 className="text-3xl">WikiNow</h1>
+    return <>
+      <Head>
+        <title>{`WikiNow - Error`}</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      <div className="bg-cornsilk-400 h-screen flex flex-col items-center justify-center pt-4">
+        <h1 className="text-3xl">No Article ID Found!</h1>
       </div>
-    );
+    </>;
   }
 
   if (!data) {
@@ -193,7 +208,7 @@ export default function Article() {
   return (
     <>
       <Head>
-        <title>{`WikiNow - ${articleId}`}</title>
+        <title>{`WikiNow - ${data.title}`}</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div className="bg-cornsilk-400 flex flex-col items-center justify-center pt-4">
@@ -207,14 +222,13 @@ export default function Article() {
 
           <div className="m-4">
             <h1 className="text-3xl h-16">{data.title}</h1>
-            <div className="bg-cornsilk-200 rounded-md p-2 text-lg shadow-lg">
-              {data.summary}
-            </div>
           </div>
 
-          {susData.map((data, ind) => {
-            return <WikihowStep {...data} key={`wkhw-${ind}`} />;
-          })}
+          {data.sections.map((section, sectionIndex) => (
+            section.map((step, stepIndex) => {
+              return <WikihowStep {...step} key={`wkhw-${stepIndex}`} />;
+            }))
+          )}
 
           <div className="flex flex-col md:flex-row">
             <Recommendations
@@ -231,29 +245,3 @@ export default function Article() {
     </>
   );
 }
-
-// export const getServerSideProps: GetServerSideProps = async (
-//   ctx
-// ): Promise<{ props: ArticleProps }> => {
-//   // const recs = await (
-//   //   await fetch(`${process.env.API_URL}/recommend?batch=2`)
-//   // ).json();
-
-//   /*const { title, summary, steps } = await (
-//      await fetch(`${process.env.API_URL}/article/${ctx.query}`)
-//   ).json();*/
-
-//   const title = "How to Have a Great Future";
-//   const summary =
-//     "Building a great future will require making changes to your life now. Whether having a great future to you means having a family, a high-paying job or getting into your dream school, it’s the things you do today will affect your tomorrow. You will have to plan and make deliberate changes in your life. Follow the steps in this article to have a great future.";
-//   const steps = susData;
-
-//   return {
-//     props: {
-//       recommendations: recs,
-//       title,
-//       summary,
-//       steps,
-//     },
-//   };
-// };

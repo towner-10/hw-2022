@@ -1,3 +1,4 @@
+import threading
 import cohere
 import os
 import json
@@ -6,9 +7,7 @@ from collections import defaultdict
 
 if os.environ["IMAGE_GEN"] == "True":
     from image_gen import Model
-
-if os.environ["IMAGE_GEN"] == "True":
-    modelGen = Model(1, 1, os.environ["MODEL_ID"])
+    modelGen = Model(os.environ["MODEL_ID"])
 
 
 def parse_steps(rawText):
@@ -47,10 +46,15 @@ class CoHereClient:
     # Initialize the client with the API token
     def __init__(self, api_token):
         self.co = cohere.Client(api_token)
+        self.paragraphs_prompt_file = open(os.path.join(
+            os.path.dirname(__file__), 'static/paragraph_prompt.txt'), 'r')
+        self.steps_prompt_file = open(os.path.join(
+            os.path.dirname(__file__), 'static/prompt.txt'), 'r')
+        self.threaded_paragraphs = {}
 
-    def save_guide(self, id_, guide_text):
+    def save_guide(self, id, guide_text):
         # Write JSON to file
-        with open(os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id_}/output.json'), 'w') as outfile:
+        with open(os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id}/output.json'), 'w') as outfile:
             json.dump(guide_text, outfile)
 
     def save_guide_text(self, id_, question):
@@ -65,7 +69,8 @@ class CoHereClient:
             "parts": {},
             "steps": {},
             "paragraphs": {},
-            "images": {}
+            "images": {},
+            "finished": False
         }
 
         # Get the steps from the co:here API
@@ -73,26 +78,34 @@ class CoHereClient:
         guide_text["steps"] = steps[0]
         guide_text["parts"] = steps[1]
 
+        print("Done getting steps")
+
         self.save_guide(id_, guide_text)
 
         # TODO: Get the paragraphs for each step from co:here API
         paragraphs = self.get_paragraphs(steps, guide_text["title"])
         guide_text["paragraphs"] = paragraphs
-        print(guide_text)
+
+        print("Done getting paragraphs")
 
         self.save_guide(id_, guide_text)
 
         if os.environ["IMAGE_GEN"] == "True":
-            images = modelGen.batch_pipe(id_, question, directory)
+            images = modelGen.batch_pipe(
+                len(steps[0]), 3, id_, question, directory)
             guide_text["images"] = images
+
+        print("Done getting images")
+
+        guide_text["finished"] = True
 
         self.save_guide(id_, guide_text)
 
     def get_steps(self, question):
         # Get the prompt file, and the question from the user
         print(f"Getting steps for: {question}")
-        prompt_file = open(os.path.join(os.path.dirname(__file__), 'static/prompt.txt'), 'r')
-        prompt = prompt_file.read() + "Question: %s\n\nList of Parts and Steps:" % question
+        prompt = self.steps_prompt_file.read(
+        ) + "Question: %s\n\nList of Parts and Steps:" % question
 
         # Get the steps from the co:here API
         response = self.co.generate(
@@ -109,55 +122,59 @@ class CoHereClient:
 
         # Parse the steps from the response
         rawSteps = format(response.generations[0].text)
-        # print("Raw Steps:\n" + rawSteps)
         steps = parse_steps(rawSteps)
         return steps
 
-    def get_paragraphs(self, steps, question):
-        prompt_file = open(os.path.join(os.path.dirname(__file__), 'static/paragraph_prompt.txt'), 'r')
-        file_text = prompt_file.read()
-        paragraphs = defaultdict(dict)
-        paragraphs[0] = defaultdict(int)
-        # print('Prediction: {}'.format(response.generations[0].text))
-        for i in range(1,len(steps[0])):
-            # print(steps[0][i]) #--> this prints the list of steps in each part i
-            for j in range(1, len(steps[0][i])):
-                print("i %d j %d" %(i,j))
-                # print(steps[1][i])
-                # print(steps[0][i][j])
-                prompt = file_text + "\nWrite a paragraph about the following step relevant to the question below.\nQuestion: %s\n%s\n%s\n\nParagraph:" % (
-                    question, steps[1][i],
-                    steps[0][i][j])
-                print(prompt)
-                response = self.co.generate(
-                    model='f7cf93f1-5087-4b62-b4f0-71f59d91c8b7-ft',
-                    prompt=prompt,
-                    max_tokens=100,
-                    temperature=0.9,
-                    k=0,
-                    p=0.75,
-                    frequency_penalty=0,
-                    presence_penalty=0,
-                    stop_sequences=["**"],
-                    return_likelihoods='NONE')
+    def get_paragraph(self, question, steps, i, j):
+        print(f"Getting paragraph for step {i}.{j}")
+        prompt = self.paragraphs_prompt + "\nWrite a paragraph about the following step relevant to the question below.\nQuestion: %s\n%s\n%s\n\nParagraph:" % (
+            question, steps[1][i],
+            steps[0][i][j])
+        try:
+            response = self.co.generate(
+                model='f7cf93f1-5087-4b62-b4f0-71f59d91c8b7-ft',
+                prompt=prompt,
+                max_tokens=100,
+                temperature=0.9,
+                k=0,
+                p=0.75,
+                frequency_penalty=0,
+                presence_penalty=0,
+                stop_sequences=["--"],
+                return_likelihoods='NONE')
+            if not len(response.generations) > 0:
+                print(f"No paragraph response for step {i}.{j}")
+            else:
                 paragraph = format(response.generations[0].text)
-                print(paragraph)
-                paragraphs[i][j] = paragraph
-                # try:
-                #
-                #
-                #
-                # except Exception as e:  # work on python 3.x
-                #     print('error: ' + str(e))
+                paragraph = paragraph.replace('**', '').replace('\n', '').replace('-', '')
+                self.threaded_paragraphs[i][j] = paragraph
+        except cohere.CohereError as e:
+            print(e.message)
 
-        # paragraphs = {
-        #     0: {
-        #         "0": "This is a paragraph for step 0 of part 0",
-        #         "1": "This is a paragraph for step 1 of part 0"
-        #     },
-        #     1: {
-        #         "0": "This is a paragraph for step 0 of part 1",
-        #         "1": "This is a paragraph for step 1 of part 1"
-        #     }
-        # }
-        return paragraphs
+    def get_paragraphs(self, steps, question):
+        self.threaded_paragraphs = defaultdict(dict)
+        self.threaded_paragraphs[0] = defaultdict(int)
+        self.paragraphs_prompt = self.paragraphs_prompt_file.read()
+
+        threads = []
+
+        for i in range(0, len(steps[0])):
+            for j in range(1, len(steps[0][i])):
+                threads.append(threading.Thread(
+                    target=self.get_paragraph, args=(question, steps, i, j)))
+
+        print(f"Starting {len(threads)} threads")
+        self.execute_batched_threads(threads, 2)
+
+        if self.threaded_paragraphs[0] == {}:
+            self.threaded_paragraphs.pop(0)
+
+        return self.threaded_paragraphs
+
+    def execute_batched_threads(self, threads, batch_size):
+        for i in range(0, len(threads), batch_size):
+            batch = threads[i:i + batch_size]
+            for thread in batch:
+                thread.start()
+            for thread in batch:
+                thread.join()

@@ -90,6 +90,7 @@ accelerate = "*"
 torchvision = "*"
 torchaudio = "*"
 onnxruntime = "*"
+ftfy = "*"
 
 [dev-packages]
 

@@ -3,9 +3,9 @@ import torch
 import os
 
 class Model:
-    def __init__(self, num_images, max_per_batch, model_id):
-        self.num_images = num_images
-        self.max_per_batch = max_per_batch
+    def __init__(self, model_id):
+        self.num_images = 1
+        self.max_per_batch = 1
         self.model_id = model_id
         self.pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
         self.pipe = self.pipe.to("cuda")
@@ -29,7 +29,10 @@ class Model:
 
         return counter
 
-    def batch_pipe(self, id, prompt, directory):
+    def batch_pipe(self, num_images, max_per_batch, id, prompt, directory):
+        self.num_images = num_images
+        self.max_per_batch = max_per_batch
+
         # Create a directory for the guide based on the ID
         directory = os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id}\\images')
         prompt = prompt
@@ -48,8 +51,8 @@ class Model:
 
         # Return list of images
         json = {}
-        for i in range(self.num_images):
+        for i in range(self.num_images + 1):
             if os.path.exists(f"{directory}/output_{i}.png"):
-                json[i] = f'images/output_{i}.png'
+                json[i] = f'output_{i}.png'
         
         return json
