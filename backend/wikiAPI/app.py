@@ -10,9 +10,11 @@ app = Flask(__name__)
 CORS(app)
 client = CoHereClient(os.environ["API_TOKEN"])
 
+
 @app.get('/')
 def index():
     return "Hello World"
+
 
 @app.get('/api/new-guide')
 def new_guide():
@@ -24,6 +26,7 @@ def new_guide():
     return {
         'id': id
     }
+
 
 @app.get('/api/guide/<id>')
 def get_guide(id):
@@ -40,6 +43,7 @@ def get_guide(id):
             'response': json.load(outfile)
         }
 
+
 @app.get('/api/guide/<id>/<image>')
 def get_image(id, image):
     path = os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id}\\images\\${image}')
@@ -50,6 +54,7 @@ def get_image(id, image):
         }
 
     return app.send_static_file(path)
+
 
 if __name__ == '__main__':
     print("Starting server...")

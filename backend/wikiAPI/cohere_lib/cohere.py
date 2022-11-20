@@ -2,6 +2,7 @@ import cohere
 import os
 import json
 import re
+
 if os.environ["IMAGE_GEN"] == "True":
     from image_gen import Model
 
@@ -46,14 +47,14 @@ class CoHereClient:
     def __init__(self, api_token):
         self.co = cohere.Client(api_token)
 
-    def save_guide(self, id, guide_text):
+    def save_guide(self, id_, guide_text):
         # Write JSON to file
-        with open(os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id}/output.json'), 'w') as outfile:
+        with open(os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id_}/output.json'), 'w') as outfile:
             json.dump(guide_text, outfile)
 
-    def save_guide_text(self, id, question):
+    def save_guide_text(self, id_, question):
         # Create a directory for the guide based on the ID
-        directory = os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id}')
+        directory = os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id_}')
         if not os.path.exists(directory):
             os.makedirs(directory)
 
@@ -69,18 +70,17 @@ class CoHereClient:
         # Get the steps from the co:here API
         steps = self.get_steps(question)
         guide_text["steps"] = steps[0]
-        guide_text["parts"] = steps [1]
+        guide_text["parts"] = steps[1]
 
-
-        self.save_guide(id, guide_text)
+        self.save_guide(id_, guide_text)
 
         # TODO: Get the paragraphs for each step from co:here API
         paragraphs = self.get_paragraphs(steps)
         guide_text["paragraphs"] = paragraphs
         print(guide_text)
 
-        self.save_guide(id, guide_text)
-        
+        self.save_guide(id_, guide_text)
+
         if os.environ["IMAGE_GEN"] == "True":
             images = modelGen.batch_pipe(id, question, directory)
         guide_text["images"] = images
@@ -131,6 +131,8 @@ class CoHereClient:
         #             presence_penalty=0,
         #             stop_sequences=["---"],
         #             return_likelihoods='NONE')
+
+
 
         paragraphs = {
             0: {

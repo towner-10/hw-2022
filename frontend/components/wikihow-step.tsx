@@ -24,7 +24,7 @@ export const WikihowStep = (props: WikihowStepProps) => {
           alt={props.title}
           height={512}
           width={512}
-          className="aspect-squar object-scale-down shadow-lg"
+          className="aspect-squar object-scale-down "
         />
         <div className="flex flex-col justify-evenly pl-6 text-lg">
           <span>

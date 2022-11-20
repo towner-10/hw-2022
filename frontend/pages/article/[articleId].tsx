@@ -174,7 +174,9 @@ export default function Article() {
         <h1 className="text-3xl">WikiNow</h1>
       </div>
     );
-  } else if (!data) {
+  }
+
+  if (!data) {
     return (
       <>
         <Head>
@@ -204,9 +206,9 @@ export default function Article() {
           </Link>
 
           <div className="m-4">
-            <h1 className="text-3xl h-16">{props.title}</h1>
+            <h1 className="text-3xl h-16">{data.title}</h1>
             <div className="bg-cornsilk-200 rounded-md p-2 text-lg shadow-lg">
-              {props.summary}
+              {data.summary}
             </div>
           </div>
 
@@ -214,14 +216,14 @@ export default function Article() {
             return <WikihowStep {...data} key={`wkhw-${ind}`} />;
           })}
 
-          <div className="flex flex-row justify-evenly w-1/2 pb-4">
+          <div className="flex flex-col md:flex-row">
             <Recommendations
               title="You Might Also Like"
-              recommendations={props.recommendations[0]}
+              recommendations={data.recommendations[0]}
             />
             <Recommendations
               title="Featured Articles"
-              recommendations={props.recommendations[1]}
+              recommendations={data.recommendations[1]}
             />
           </div>
         </>
