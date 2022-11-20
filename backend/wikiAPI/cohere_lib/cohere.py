@@ -115,15 +115,17 @@ class CoHereClient:
 
     def get_paragraphs(self, steps, question):
         prompt_file = open(os.path.join(os.path.dirname(__file__), 'static/paragraph_prompt.txt'), 'r')
+        file_text = prompt_file.read()
         paragraphs = defaultdict(dict)
         paragraphs[0] = defaultdict(int)
         # print('Prediction: {}'.format(response.generations[0].text))
         for i in range(1,len(steps[0])):
             # print(steps[0][i]) #--> this prints the list of steps in each part i
             for j in range(1, len(steps[0][i])):
+                print("i %d j %d" %(i,j))
                 # print(steps[1][i])
                 # print(steps[0][i][j])
-                prompt = prompt_file.read() + "Write a paragraph about the following step relevant to the question below.\nQuestion: %s\n%s\n%s\n\nParagraph:" % (
+                prompt = file_text + "\nWrite a paragraph about the following step relevant to the question below.\nQuestion: %s\n%s\n%s\n\nParagraph:" % (
                     question, steps[1][i],
                     steps[0][i][j])
                 print(prompt)
