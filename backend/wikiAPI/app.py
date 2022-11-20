@@ -9,6 +9,10 @@ app = Flask(__name__)
 CORS(app)
 client = CoHereClient(os.environ["API_TOKEN"])
 
+@app.get('/')
+def index():
+    return "Hello World"
+
 @app.get('/api/new-guide')
 def new_guide():
     prompt = request.args.get("prompt")
