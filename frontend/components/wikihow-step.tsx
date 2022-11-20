@@ -10,12 +10,12 @@ export interface WikihowStepProps {
 export const WikihowStep = (props: WikihowStepProps) => {
   if (props.display === false) return (<></>);
   return (
-    <div className="bg-cornsilk-200 rounded-md m-4 mb-8 shadow-lg w-7/8">
-      <div className="flex flex-row sticky rounded-t-md bg-cornsilk-200 b border-b-2 top-0 border-patrick-blue-400">
+    <div className="bg-cornsilk-200 rounded-md mb-8 shadow-lg">
+      <div className="flex flex-row sticky rounded-t-md bg-cornsilk-200 border-b-2 top-0 border-patrick-blue-400">
         <div className="flex flex-col items-center rounded-tl-md justify-center w-16 h-16 bg-patrick-blue-400 text-cornsilk-400">
           <h1>{props.section}</h1>
         </div>
-        <div className="pl-6 flex flex-col justify-center">
+        <div className="ml-6 flex flex-col justify-center">
           <h2>{props.sectionTitle}</h2>
         </div>
       </div>

@@ -1,11 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 // This needs to take in data from the backend
 
-import Link from "next/link";
-
 export interface RecommendationProps {
-  previewImageUrl: string;
   title: string;
+  id: string;
 }
 
 interface RecommendationsProps {
@@ -14,12 +12,12 @@ interface RecommendationsProps {
   recommendations: RecommendationProps[];
 }
 
-const Recommendation = (props: RecommendationProps) => {
+const Recommendation = (prop: RecommendationProps) => {
   return (
-    <Link className="aspect-square relative m-2 text-left hover:scale-110 transition-all duration-150" href={`/article/${encodeURIComponent(props.title)}`}>
-      <img src={props.previewImageUrl} alt="Preview image" />
-      <div className="absolute bottom-0 w-full bg-black bg-opacity-60 text-white p-1 min-h-13">{props.title}</div>
-    </Link>
+    <a className="aspect-square relative m-2 text-left hover:scale-110 transition-all duration-150" href={`/article/${encodeURIComponent(prop.id)}`}>
+      <img src={`${process.env.NEXT_PUBLIC_API_URL}/api/guide/${prop.id}/output_1.png`} alt="Preview image" width={164} height={164} />
+      <div className="absolute bottom-0 w-full bg-black bg-opacity-60 text-white p-1 min-h-13">{prop.title}</div>
+    </a>
   );
 };
 

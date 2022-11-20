@@ -10,53 +10,6 @@ import {
 } from "../../components/recommendations";
 import { WikihowStep, WikihowStepProps } from "../../components/wikihow-step";
 
-const recs: RecommendationProps[][] = [
-  [
-    {
-      title: "How to Have the best vacation of your life",
-      previewImageUrl:
-        "https://www.wikihow.com/images/thumb/e/ee/Have-the-Best-Vacation-of-Your-Life-Step-22.jpg/-crop-127-140-127px-Have-the-Best-Vacation-of-Your-Life-Step-22.jpg.webp",
-    },
-    {
-      title: "How to Start a great school year",
-      previewImageUrl:
-        "https://www.wikihow.com/images/thumb/d/d4/Start-a-Great-School-Year-Step-10.jpg/-crop-127-140-127px-Start-a-Great-School-Year-Step-10.jpg.webp",
-    },
-    {
-      title: "How to Set Goals",
-      previewImageUrl:
-        "https://www.wikihow.com/images/thumb/a/a5/Set-Goals-Step-12-Version-2.jpg/-crop-127-140-127px-Set-Goals-Step-12-Version-2.jpg.webp",
-    },
-    {
-      title: "How to Best 2 ways to clean running shoes",
-      previewImageUrl:
-        "https://www.wikihow.com/images/thumb/f/f8/Clean-Running-Shoes-Step-14-Version-2.jpg/-crop-127-140-127px-Clean-Running-Shoes-Step-14-Version-2.jpg.webp",
-    },
-  ],
-  [
-    {
-      title: "AAAAA",
-      previewImageUrl:
-        "https://www.wikihow.com/images/thumb/e/ee/Have-the-Best-Vacation-of-Your-Life-Step-22.jpg/-crop-127-140-127px-Have-the-Best-Vacation-of-Your-Life-Step-22.jpg.webp",
-    },
-    {
-      title: "BBBB",
-      previewImageUrl:
-        "https://www.wikihow.com/images/thumb/d/d4/Start-a-Great-School-Year-Step-10.jpg/-crop-127-140-127px-Start-a-Great-School-Year-Step-10.jpg.webp",
-    },
-    {
-      title: "CCCC",
-      previewImageUrl:
-        "https://www.wikihow.com/images/thumb/a/a5/Set-Goals-Step-12-Version-2.jpg/-crop-127-140-127px-Set-Goals-Step-12-Version-2.jpg.webp",
-    },
-    {
-      title: "DDDD",
-      previewImageUrl:
-        "https://www.wikihow.com/images/thumb/f/f8/Clean-Running-Shoes-Step-14-Version-2.jpg/-crop-127-140-127px-Clean-Running-Shoes-Step-14-Version-2.jpg.webp",
-    },
-  ],
-];
-
 // Each key will be present in all of image/paragraphs/steps.
 interface GuideReturnResponse {
   title: string;
@@ -79,13 +32,13 @@ interface GuideReturnResponse {
     };
   };
   finished: boolean;
+  id?: string;
 }
 
 interface ArticleProps {
   title: string;
   summary: string;
   sections: WikihowStepProps[][];
-  recommendations: RecommendationProps[][];
   finished: boolean;
 }
 
@@ -126,10 +79,9 @@ const processGuideReturnResponse = (res: GuideReturnResponse, id: string): Artic
     });
 
   const { title, finished } = res;
-  const recommendations = recs;
   const summary = "This is a summary";
 
-  return { title, summary, sections, recommendations, finished };
+  return { title, summary, sections, finished };
 };
 
 export default function Article() {
@@ -137,6 +89,7 @@ export default function Article() {
 
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
   const [data, setData] = useState<ArticleProps | undefined>(undefined);
+  const [recommendations, setRecommendations] = useState<RecommendationProps[] | undefined>(undefined);
   const { articleId } = router.query;
 
   useEffect(() => {
@@ -164,6 +117,25 @@ export default function Article() {
       clearInterval(intervalRef.current);
     }
   }, [data]);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/guides/recommended`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.status === 200) {
+          const result: RecommendationProps[] = [];
+          json.response.forEach((rec: any) => {
+            const guide: GuideReturnResponse = rec;
+            result.push({
+              title: guide.title,
+              id: guide.id ? guide.id : "",
+            });
+
+          });
+          setRecommendations(json.response);
+        }
+      });
+  }, []);
 
   if (!articleId) {
     return <>
@@ -218,38 +190,35 @@ export default function Article() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div className="bg-cornsilk-400 flex flex-col items-center justify-center pt-4">
-        <>
-          <Link
-            href="/"
-            className="text-2xl h-12 underline transition-all duration-75 hover:text-patrick-blue-400 hover:scale-110"
-          >
-            <h1>WikiNow</h1>
-          </Link>
+        <Link
+          href="/"
+          className="text-2xl h-12 underline transition-all duration-75 hover:text-patrick-blue-400 hover:scale-110"
+        >
+          <h1>WikiNow</h1>
+        </Link>
 
-          <div className="m-4">
-            <h1 className="text-3xl h-16 capitalize">{data.title}</h1>
-          </div>
+        <div className="m-4">
+          <h1 className="text-3xl h-16 capitalize">{data.title}</h1>
+        </div>
 
-          {data.sections.map((section, sectionIndex) => (
-            section.map((step, stepIndex) => {
-              return (
-                <div key={stepIndex} className="m-4">
-                  <WikihowStep
-                    {...step}
-                    key={`wkhw-${sectionIndex}-${stepIndex}`}
-                  />
-                </div>
-              );
-            }))
-          )}
+        {data.sections.map((section, sectionIndex) => (
+          section.map((step, stepIndex) => {
+            if (step.display !== undefined && step.display === false) return <></>;
+            return (
+              <div key={stepIndex} className="m-4 w-3/4">
+                <WikihowStep
+                  {...step}
+                  key={`wkhw-${sectionIndex}-${stepIndex}`}
+                />
+              </div>
+            );
+          }))
+        )}
 
-          <div className="flex flex-col md:flex-row">
-            <Recommendations
-              title="You Might Also Like"
-              recommendations={data.recommendations[0]}
-            />
-          </div>
-        </>
+        {recommendations && <Recommendations
+          title="You Might Also Like"
+          recommendations={recommendations}
+        />}
       </div>
     </>
   );

@@ -49,14 +49,12 @@ def get_image(id, image):
     path = os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id}\\images\\{image}')
     if not os.path.exists(path):
         path = os.listdir(os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id}\\images'))[0]
-        print(f"Alternative image found at: {path}")
         if not os.path.exists(path):
             return {
                 'status': 404,
                 'error': 'Image not found'
             }
 
-    print(f"Returning image: {path}")
     return send_file(path, mimetype='image/png')
 
 @app.get('/api/guides/recommended')
@@ -65,13 +63,16 @@ def get_recommended():
         '626a7744-973c-4787-9fd4-b0412ceebdde',
         '242c9c63-78e9-4b7f-a3f2-2e3fd239f195',
         '74ad0557-7282-446d-8774-8e6abe0e1c4c',
+        '154f4cc7-c70a-49f0-80df-1a48e8bb6395'
     ]
 
     res = []
 
     for guide in guides:
         with open(os.path.join(os.environ["GUIDE_DIRECTORY"], f'{guide}\\output.json'), 'r') as outfile:
-            res.append(json.load(outfile))
+            result = json.load(outfile)
+            result['id'] = guide
+            res.append(result)
 
     return {
         'status': 200,
