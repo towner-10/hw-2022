@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "imagenapi"
+version = "0.1.0"
+description = ""
+authors = ["Kevin Jiang <kevin51jiang@email.com>"]
+readme = "README.md"
+packages = [{include = "imagenapi", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+quart = {extras = ["dotenv"], version = "^0.18.3"}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+init_db = "imagenapi:init_db"
+start = "imagenapi:run"
+
+
