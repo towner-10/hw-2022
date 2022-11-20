@@ -2,6 +2,11 @@ import cohere
 import os
 import json
 import re
+if os.environ["IMAGE_GEN"] == "True":
+    from image_gen import Model
+
+if os.environ["IMAGE_GEN"] == "True":
+    modelGen = Model(1, 1, os.environ["MODEL_ID"])
 
 def parse_steps(rawText) -> dict:
     current_part = 0
@@ -29,21 +34,21 @@ def parse_steps(rawText) -> dict:
     return steps
 
 class CoHereClient:
-    # Initalize the client with the API token
+    # Initialize the client with the API token
     def __init__(self, api_token):
         self.co = cohere.Client(api_token)
 
     def save_guide(self, id, guide_text):
-        # Create a directory for the guide based on the ID
-        directory = os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id}')
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-
         # Write JSON to file
         with open(os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id}/output.json'), 'w') as outfile:
             json.dump(guide_text, outfile)
 
     def save_guide_text(self, id, question):
+        # Create a directory for the guide based on the ID
+        directory = os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id}')
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
         # Returns a JSON object with the following structure:
         guide_text = {
             "title": question,
@@ -64,6 +69,11 @@ class CoHereClient:
 
         self.save_guide(id, guide_text)
         
+        if os.environ["IMAGE_GEN"] == "True":
+            images = modelGen.batch_pipe(id, question, directory)
+        guide_text["images"] = images
+
+        self.save_guide(id, guide_text)
 
     def get_steps(self, question):
         # Get the prompt file, and the question from the user

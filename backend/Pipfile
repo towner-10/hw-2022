@@ -3,6 +3,11 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
+[[source]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu117"
+verify_ssl = true
+
 [packages]
 aiodns = "==3.0.0"
 aiohttp = "==3.8.1"
@@ -40,7 +45,6 @@ loguru = "==0.6.0"
 lxml = "==4.7.1"
 markupsafe = "==2.1.0"
 multidict = "==5.2.0"
-numpy = "==1.22.2"
 pillow = "==9.1.0"
 pipenv = "==2022.11.11"
 platformdirs = "==2.3.0"
@@ -78,6 +82,14 @@ werkzeug = "==2.0.3"
 win32-setctime = "==1.1.0"
 yarl = "==1.7.2"
 cohere = "*"
+diffusers = "*"
+transformers = "*"
+scipy = "*"
+torch = {index = "pytorch",version = "==1.13.0"}
+accelerate = "*"
+torchvision = "*"
+torchaudio = "*"
+onnxruntime = "*"
 
 [dev-packages]
 
