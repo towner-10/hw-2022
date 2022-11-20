@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 export interface WikihowStepProps {
-  stepNum: number;
+  stepNum: string;
+  sectionTitle: string;
   title: string;
   imageUrl: string;
-  boldDesc: string;
   restOfDesc: string;
 }
 
@@ -15,7 +15,7 @@ export const WikihowStep = (props: WikihowStepProps) => {
           <h1>{props.stepNum}.</h1>
         </div>
         <div className="pl-6 flex flex-col justify-center">
-          <h2>{props.title}</h2>
+          <h2>{props.sectionTitle}</h2>
         </div>
       </div>
       <div className="p-10 flex flex-col md:flex-row justify-between">
@@ -28,7 +28,7 @@ export const WikihowStep = (props: WikihowStepProps) => {
         />
         <div className="flex flex-col justify-evenly pl-6 text-lg">
           <span>
-            <em>{props.boldDesc}</em> {props.restOfDesc}
+            <em>{props.title}</em> {props.restOfDesc}
           </span>
         </div>
       </div>
