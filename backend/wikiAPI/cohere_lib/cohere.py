@@ -30,7 +30,7 @@ def parse_steps(rawText):
             parts[current_part] = line
 
         elif line[0:4] == "Step":
-            print(line)
+            # print(line)
             try:
                 steps[current_part][int(line[5:6])] = line
             except:
@@ -75,7 +75,7 @@ class CoHereClient:
         self.save_guide(id_, guide_text)
 
         # TODO: Get the paragraphs for each step from co:here API
-        paragraphs = self.get_paragraphs(steps)
+        paragraphs = self.get_paragraphs(steps, guide_text["title"])
         guide_text["paragraphs"] = paragraphs
         print(guide_text)
 
@@ -83,7 +83,7 @@ class CoHereClient:
 
         if os.environ["IMAGE_GEN"] == "True":
             images = modelGen.batch_pipe(id, question, directory)
-        guide_text["images"] = images
+            guide_text["images"] = images
 
         self.save_guide(id, guide_text)
 
@@ -108,40 +108,52 @@ class CoHereClient:
 
         # Parse the steps from the response
         rawSteps = format(response.generations[0].text)
-        print("Raw Steps:\n" + rawSteps)
+        # print("Raw Steps:\n" + rawSteps)
         steps = parse_steps(rawSteps)
         return steps
 
-    def get_paragraphs(self, steps):
-        prompt_file = open(os.path.join(os.path.dirname(__file__), 'static/prompt.txt'), 'r')
-
+    def get_paragraphs(self, steps, question):
+        prompt_file = open(os.path.join(os.path.dirname(__file__), 'static/paragraph_prompt.txt'), 'r')
+        paragraphs = {0: {0: ""}}
         # print('Prediction: {}'.format(response.generations[0].text))
-        print(steps)
-        # for i in range(len(steps)):
-        #     for j in range(len(steps[i])):
-        #         prompt = prompt_file.read() + "Write a paragraph about a step in the question:\nQuestion: <Question>\nPart title: <Part title>\nStep 2: <Step>\nParagraph:"
-        #         response = self.co.generate(
-        #             model='52811f2c-7d95-4259-8ec1-257616552f3f-ft',
-        #             prompt='',
-        #             max_tokens=100,
-        #             temperature=0.9,
-        #             k=0,
-        #             p=0.75,
-        #             frequency_penalty=0,
-        #             presence_penalty=0,
-        #             stop_sequences=["---"],
-        #             return_likelihoods='NONE')
+        for i in range(1,len(steps[0])):
+            # print(steps[0][i]) #--> this prints the list of steps in each part i
+            for j in range(1, len(steps[0][i])):
+                # print(steps[1][i])
+                # print(steps[0][i][j])
+                prompt = prompt_file.read() + "Write a paragraph about the following step relevant to the question below.\nQuestion: %s\n%s\n%s\n\nParagraph:" % (
+                    question, steps[1][i],
+                    steps[0][i][j])
+                print(prompt)
+                response = self.co.generate(
+                    model='f7cf93f1-5087-4b62-b4f0-71f59d91c8b7-ft',
+                    prompt=prompt,
+                    max_tokens=100,
+                    temperature=0.9,
+                    k=0,
+                    p=0.75,
+                    frequency_penalty=0,
+                    presence_penalty=0,
+                    stop_sequences=["---"],
+                    return_likelihoods='NONE')
+                paragraph = format(response.generations[0].text)
+                print(paragraph)
+                paragraphs[i] = {j:paragraph}
+                # try:
+                #
+                #
+                #
+                # except Exception as e:  # work on python 3.x
+                #     print('error: ' + str(e))
 
-
-
-        paragraphs = {
-            0: {
-                "0": "This is a paragraph for step 0 of part 0",
-                "1": "This is a paragraph for step 1 of part 0"
-            },
-            1: {
-                "0": "This is a paragraph for step 0 of part 1",
-                "1": "This is a paragraph for step 1 of part 1"
-            }
-        }
+        # paragraphs = {
+        #     0: {
+        #         "0": "This is a paragraph for step 0 of part 0",
+        #         "1": "This is a paragraph for step 1 of part 0"
+        #     },
+        #     1: {
+        #         "0": "This is a paragraph for step 0 of part 1",
+        #         "1": "This is a paragraph for step 1 of part 1"
+        #     }
+        # }
         return paragraphs
