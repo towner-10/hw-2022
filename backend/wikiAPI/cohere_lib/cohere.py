@@ -80,6 +80,10 @@ class CoHereClient:
 
         print("Done getting steps")
 
+        if len(guide_text["parts"]) == 1 and guide_text["parts"][0] == {}:
+            print("No steps found - trying again")
+            return self.save_guide_text(id_, question)
+
         self.save_guide(id_, guide_text)
 
         # TODO: Get the paragraphs for each step from co:here API
