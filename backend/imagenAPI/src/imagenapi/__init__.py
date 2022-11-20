@@ -35,13 +35,18 @@ async def jobs():
     if request.method == "POST":
         db = _get_db()
         json_data = await request.get_json()
+        # Title, and then list of uh prompts of images
+        title = json_data['title']
+        prompts = json_data['prompts']
 
         print("adding new job ", json_data['title'])
         cur = db.execute(
             "INSERT INTO jobs (title) VALUES (?)",
-            [json_data['title']]
+            [title]
         )
         db.commit()
+
+
 
         print("new ID: ", cur.lastrowid)
 
