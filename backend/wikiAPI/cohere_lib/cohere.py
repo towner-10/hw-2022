@@ -2,6 +2,7 @@ import cohere
 import os
 import json
 import re
+from collections import defaultdict
 
 if os.environ["IMAGE_GEN"] == "True":
     from image_gen import Model
@@ -82,10 +83,10 @@ class CoHereClient:
         self.save_guide(id_, guide_text)
 
         if os.environ["IMAGE_GEN"] == "True":
-            images = modelGen.batch_pipe(id, question, directory)
+            images = modelGen.batch_pipe(id_, question, directory)
             guide_text["images"] = images
 
-        self.save_guide(id, guide_text)
+        self.save_guide(id_, guide_text)
 
     def get_steps(self, question):
         # Get the prompt file, and the question from the user
@@ -114,7 +115,8 @@ class CoHereClient:
 
     def get_paragraphs(self, steps, question):
         prompt_file = open(os.path.join(os.path.dirname(__file__), 'static/paragraph_prompt.txt'), 'r')
-        paragraphs = {0: {0: ""}}
+        paragraphs = defaultdict(dict)
+        paragraphs[0] = defaultdict(int)
         # print('Prediction: {}'.format(response.generations[0].text))
         for i in range(1,len(steps[0])):
             # print(steps[0][i]) #--> this prints the list of steps in each part i
@@ -134,11 +136,11 @@ class CoHereClient:
                     p=0.75,
                     frequency_penalty=0,
                     presence_penalty=0,
-                    stop_sequences=["---"],
+                    stop_sequences=["**"],
                     return_likelihoods='NONE')
                 paragraph = format(response.generations[0].text)
                 print(paragraph)
-                paragraphs[i] = {j:paragraph}
+                paragraphs[i][j] = paragraph
                 # try:
                 #
                 #
