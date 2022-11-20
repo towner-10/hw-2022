@@ -8,8 +8,8 @@ export const SearchBox = () => {
 
   const onSubmit = async (query: string) => {
     const howToQuery = query.toLowerCase().startsWith("how to")
-      ? `how to ${query}`
-      : query;
+      ? query
+      : `how to ${query}`;
 
     let res = await fetch(
       `${

@@ -3,6 +3,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { createRef, useEffect, useRef, useState } from "react";
+import { Loader } from "../../components/loader";
 import {
   RecommendationProps,
   Recommendations,
@@ -90,13 +91,22 @@ const recs: RecommendationProps[][] = [
 interface GuideReturnResponse {
   title: string;
   images: {
-    [key: string]: string;
+    [key: string]: {
+      [key: string]: string;
+    };
   };
   paragraphs: {
+    [key: string]: {
+      [key: string]: string;
+    };
+  };
+  parts: {
     [key: string]: string;
   };
   steps: {
-    [key: string]: string;
+    [key: string]: {
+      [key: string]: string;
+    };
   };
 }
 
@@ -107,22 +117,39 @@ interface ArticleProps {
   recommendations: RecommendationProps[][];
 }
 
-const processGuideReturnResponse = (res: GuideReturnResponse): ArticleProps => {
-  const sections: WikihowStepProps[][] = Object.entries(res.steps).map(
-    ([sectionKey, sectionSteps]) => {
-      const steps = Object.entries(sectionSteps).map(([stepKey, stepValue]) => {
-        return {
-          stepNum: stepKey,
-          title: stepValue,
-          sectionTitle: stepValue,
-          restOfDesc: "",
-          imageUrl: res.images[stepKey],
-        };
-      });
-
-      return steps;
-    }
+const isEmptyObject = (obj: any) => {
+  return (
+    obj &&
+    Object.keys(obj).length === 0 &&
+    Object.getPrototypeOf(obj) === Object.prototype
   );
+};
+
+const processGuideReturnResponse = (res: GuideReturnResponse): ArticleProps => {
+  const allSections = Object.entries(res.parts)
+    .filter(([_, val]) => !isEmptyObject(val))
+    .map(([partInd, partTitle]) => {
+      const sectionSteps = Object.entries(res.steps[partInd])
+        .filter(([_, val]) => !isEmptyObject(val))
+        .map(([stepInd, stepTitle]) => {
+          // console.log("Part ind: ", partInd, "stepInd", stepInd);
+          const step: WikihowStepProps = {
+            stepNum: stepInd || "No step number",
+            sectionTitle: partTitle || "No section title",
+            title: stepTitle || "No step title",
+            restOfDesc:
+              res?.paragraphs?.[partInd]?.[stepInd] ||
+              "There is no description for this step.",
+            imageUrl:
+              res?.images?.[partInd]?.[stepInd] ||
+              "https://www.wikihow.com/images/thumb/2/2f/Be-Diplomatic-with-Family-Step-1.jpg/v4-460px-Be-Diplomatic-with-Family-Step-1.jpg.webp",
+          };
+
+          return step;
+        });
+
+      return sectionSteps;
+    });
 
   // TODO: Uncomment
   // const { title, summary } = res;
@@ -132,25 +159,25 @@ const processGuideReturnResponse = (res: GuideReturnResponse): ArticleProps => {
   const recommendations = recs;
   const summary = "This is a summary";
 
-  return { title, summary, sections, recommendations };
+  return { title, summary, sections: allSections, recommendations };
 };
 
 export default function Article() {
   const router = useRouter();
 
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
-  const [data, setData] = useState<any | undefined>(undefined);
+  const [data, setData] = useState<ArticleProps | undefined>();
   const { articleId } = router.query;
 
   useEffect(() => {
     intervalRef.current = setInterval(() => {
-      console.log("interval run");
+      // console.log("interval run");
       if (articleId && !data) {
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/guide/${articleId}`)
           .then((res) => res.json())
           .then((json) => {
             if (json.status === 200) {
-              console.log(json);
+              console.log("Received json: ", json);
               if (json.reponse) clearInterval(intervalRef.current);
 
               setData(processGuideReturnResponse(json.response));
@@ -170,7 +197,7 @@ export default function Article() {
 
   if (!articleId) {
     return (
-      <div className="bg-cornsilk-400 flex flex-col items-center justify-center pt-4">
+      <div className="bg-cornsilk-400 min-h-screen flex flex-col items-center justify-center pt-4">
         <h1 className="text-3xl">WikiNow</h1>
       </div>
     );
@@ -183,8 +210,10 @@ export default function Article() {
           <title>{`WikiNow - Loading...`}</title>
           <link rel="icon" href="/favicon.ico" />
         </Head>
-        <div className="bg-cornsilk-400 h-screen flex flex-col items-center justify-center pt-4">
-          <h1 className="text-3xl">Loading...</h1>
+        <div className="bg-cornsilk-400 min-h-screen flex flex-col items-center justify-center pt-4">
+          <h1 className="text-3xl">
+            Loading <Loader />
+          </h1>
         </div>
       </>
     );
@@ -193,10 +222,10 @@ export default function Article() {
   return (
     <>
       <Head>
-        <title>{`WikiNow - ${articleId}`}</title>
+        <title>{`WikiNow - ${data.title}`}</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="bg-cornsilk-400 flex flex-col items-center justify-center pt-4">
+      <div className="bg-cornsilk-400 min-h-screen flex flex-col items-center justify-center pt-4">
         <>
           <Link
             href="/"
@@ -206,14 +235,24 @@ export default function Article() {
           </Link>
 
           <div className="m-4">
-            <h1 className="text-3xl h-16">{data.title}</h1>
+            <h1 className="text-3xl h-16 capitalize">{data.title}</h1>
             <div className="bg-cornsilk-200 rounded-md p-2 text-lg shadow-lg">
               {data.summary}
             </div>
           </div>
 
-          {susData.map((data, ind) => {
-            return <WikihowStep {...data} key={`wkhw-${ind}`} />;
+          {data.sections.map((section, sectionInd) => {
+            return section.map((step, stepInd) => {
+              return (
+                <div key={stepInd} className="m-4">
+                  <WikihowStep
+                    {...step}
+                    key={`wkhw-${sectionInd}-${stepInd}`}
+                  />
+                </div>
+              );
+            });
+            // return <WikihowStep {...data} key={`wkhw-${ind}`} />;
           })}
 
           <div className="flex flex-col md:flex-row">
@@ -231,29 +270,3 @@ export default function Article() {
     </>
   );
 }
-
-// export const getServerSideProps: GetServerSideProps = async (
-//   ctx
-// ): Promise<{ props: ArticleProps }> => {
-//   // const recs = await (
-//   //   await fetch(`${process.env.API_URL}/recommend?batch=2`)
-//   // ).json();
-
-//   /*const { title, summary, steps } = await (
-//      await fetch(`${process.env.API_URL}/article/${ctx.query}`)
-//   ).json();*/
-
-//   const title = "How to Have a Great Future";
-//   const summary =
-//     "Building a great future will require making changes to your life now. Whether having a great future to you means having a family, a high-paying job or getting into your dream school, it’s the things you do today will affect your tomorrow. You will have to plan and make deliberate changes in your life. Follow the steps in this article to have a great future.";
-//   const steps = susData;
-
-//   return {
-//     props: {
-//       recommendations: recs,
-//       title,
-//       summary,
-//       steps,
-//     },
-//   };
-// };
