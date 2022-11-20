@@ -2,6 +2,7 @@ import { GetServerSideProps } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { Loader } from "../../components/loader";
 import { createRef, useEffect, useRef, useState } from "react";
 import {
   RecommendationProps,
@@ -60,7 +61,9 @@ const recs: RecommendationProps[][] = [
 interface GuideReturnResponse {
   title: string;
   images: {
-    [key: string]: string;
+    [key: string]: {
+      [key: string]: string;
+    };
   };
   paragraphs: {
     [key: string]: {
@@ -86,59 +89,42 @@ interface ArticleProps {
   finished: boolean;
 }
 
+const isEmptyObject = (obj: any) => {
+  return (
+    obj &&
+    Object.keys(obj).length === 0 &&
+    Object.getPrototypeOf(obj) === Object.prototype
+  );
+};
+
 const processGuideReturnResponse = (res: GuideReturnResponse, id: string): ArticleProps => {
-  const sections: WikihowStepProps[][] = Object.entries(res.steps).map(([sectionKey, sectionSteps]) => {
-    const steps = Object.entries(sectionSteps).map(([stepKey, stepValue]) => {
-      if (res.finished) {
-        if (res.paragraphs[sectionKey] !== undefined) {
-          const image_file = res.images[stepKey] || "output_0.png";
-          if (res.paragraphs[sectionKey][stepKey] !== undefined) {
-            return {
-              section: `${sectionKey}.${stepKey}`,
-              sectionTitle: stepValue,
-              paragraph: res.paragraphs[sectionKey][stepKey],
-              imageUrl: `${process.env.NEXT_PUBLIC_API_URL}/api/guide/${id}/${image_file}`,
-            };
-          } else {
-            console.log(`No paragraph for ${sectionKey}.${stepKey}`);
-            return {
-              display: false,
-              section: `${sectionKey}.${stepKey}`,
-              sectionTitle: stepValue,
-              paragraph: "",
-              imageUrl: `${process.env.NEXT_PUBLIC_API_URL}/api/guide/${id}/${image_file}`,
-            }
-          }
-        }
-        const image_file = res.images[stepKey] || "output_0.png";
-        return {
-          display: false,
-          section: `${sectionKey}.${stepKey}`,
-          sectionTitle: stepValue,
-          paragraph: "",
-          imageUrl: `${process.env.NEXT_PUBLIC_API_URL}/api/guide/${id}/${image_file}`,
-        }
-      } else {
-        if (res.paragraphs[sectionKey] !== undefined) {
-          return {
+  const sections: WikihowStepProps[][] = Object.entries(res.steps)
+    .filter(([_, val]) => !isEmptyObject(val))
+    .map(([sectionKey, sectionSteps]) => {
+      const steps = Object.entries(sectionSteps)
+        .filter(([_, val]) => !isEmptyObject(val))
+        .map(([stepKey, stepValue]) => {
+
+          const image_file = res?.finished ? res?.images[stepKey] || "output_1.png" : undefined;
+
+          const step: WikihowStepProps = {
             section: `${sectionKey}.${stepKey}`,
             sectionTitle: stepValue,
-            paragraph: res.paragraphs[sectionKey][stepKey],
-            imageUrl: "",
-          }
-        }
-        return {
-          section: `${sectionKey}.${stepKey}`,
-          sectionTitle: stepValue,
-          paragraph: "",
-          imageUrl: "",
-        }
-      }
+            paragraph: res?.paragraphs?.[sectionKey]?.[stepKey] || undefined,
+            imageUrl: res?.finished ? `${process.env.NEXT_PUBLIC_API_URL}/api/guide/${id}/${image_file}` : undefined,
+          };
+
+          if (res.finished && isEmptyObject(res?.paragraphs)) step.display = false;
+          if (res.finished && isEmptyObject(res?.images)) step.display = false;
+
+          if (res.finished && (res.paragraphs[sectionKey] === undefined || res.paragraphs[sectionKey][stepKey] === undefined)) step.display = false;
+
+          return step;
+        });
+
+      return steps;
     });
 
-    return steps;
-  }
-  );
   const { title, finished } = res;
   const recommendations = recs;
   const summary = "This is a summary";
@@ -185,7 +171,7 @@ export default function Article() {
         <title>{`WikiNow - Error`}</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="bg-cornsilk-400 h-screen flex flex-col items-center justify-center pt-4">
+      <div className="bg-cornsilk-400 min-h-screen flex flex-col items-center justify-center pt-4">
         <h1 className="text-3xl">No Article ID Found!</h1>
       </div>
     </>;
@@ -198,11 +184,31 @@ export default function Article() {
           <title>{`WikiNow - Loading...`}</title>
           <link rel="icon" href="/favicon.ico" />
         </Head>
-        <div className="bg-cornsilk-400 h-screen flex flex-col items-center justify-center pt-4">
-          <h1 className="text-3xl">Loading...</h1>
+        <div className="bg-cornsilk-400 min-h-screen flex flex-col items-center justify-center pt-4">
+          <h1 className="text-3xl pb-4">Loading...</h1>
+          <Loader />
         </div>
       </>
     );
+  }
+
+  if (data.sections.length === 0) {
+    return <>
+      <Head>
+        <title>{`WikiNow - Error`}</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      <div className="bg-cornsilk-400 min-h-screen flex flex-col items-center justify-center">
+        <Link
+          href="/"
+          className="text-2xl pb-20 h-12 underline transition-all duration-75 hover:text-patrick-blue-400 hover:scale-110"
+        >
+          <h1>WikiNow</h1>
+        </Link>
+        <h1 className="text-3xl pb-2">The prompt was not specific enough!</h1>
+        <h2 className="text-xl">Try again using another prompt...</h2>
+      </div>
+    </>;
   }
 
   return (
@@ -221,12 +227,19 @@ export default function Article() {
           </Link>
 
           <div className="m-4">
-            <h1 className="text-3xl h-16">{data.title}</h1>
+            <h1 className="text-3xl h-16 capitalize">{data.title}</h1>
           </div>
 
           {data.sections.map((section, sectionIndex) => (
             section.map((step, stepIndex) => {
-              return <WikihowStep {...step} key={`wkhw-${stepIndex}`} />;
+              return (
+                <div key={stepIndex} className="m-4">
+                  <WikihowStep
+                    {...step}
+                    key={`wkhw-${sectionIndex}-${stepIndex}`}
+                  />
+                </div>
+              );
             }))
           )}
 
@@ -234,10 +247,6 @@ export default function Article() {
             <Recommendations
               title="You Might Also Like"
               recommendations={data.recommendations[0]}
-            />
-            <Recommendations
-              title="Featured Articles"
-              recommendations={data.recommendations[1]}
             />
           </div>
         </>
