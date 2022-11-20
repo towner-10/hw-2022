@@ -7,12 +7,14 @@ export const SearchBox = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const onSubmit = async (query: string) => {
+    const howToQuery = query.toLowerCase().startsWith("how to")
+      ? `how to ${query}`
+      : query;
 
-    const submittableQuery = query.toLowerCase().startsWith("how to") ? query : `how to ${query}`;
     let res = await fetch(
       `${
         process.env.NEXT_PUBLIC_API_URL
-      }/api/new-guide?prompt=${encodeURIComponent(query)}`
+      }/api/new-guide?prompt=${encodeURIComponent(howToQuery)}`
     );
     let data = await res.json();
     router.push(`/article/${data.id}`);
