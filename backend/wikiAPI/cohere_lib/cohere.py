@@ -6,7 +6,7 @@ import re
 from collections import defaultdict
 
 if os.environ["IMAGE_GEN"] == "True":
-    from image_gen import Model
+    from wikiAPI.image_gen import Model
     modelGen = Model(os.environ["MODEL_ID"])
 
 
@@ -57,7 +57,7 @@ class CoHereClient:
         with open(os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id}/output.json'), 'w') as outfile:
             json.dump(guide_text, outfile)
 
-    def save_guide_text(self, id_, question):
+    def save_guide_text(self, id_, question, tries):
         # Create a directory for the guide based on the ID
         directory = os.path.join(os.environ["GUIDE_DIRECTORY"], f'{id_}')
         if not os.path.exists(directory):
@@ -82,7 +82,8 @@ class CoHereClient:
 
         if len(guide_text["parts"]) == 1 and guide_text["parts"][0] == {}:
             print("No steps found - trying again")
-            return self.save_guide_text(id_, question)
+            if tries < 3:
+                return self.save_guide_text(id_, question, tries + 1)
 
         self.save_guide(id_, guide_text)
 

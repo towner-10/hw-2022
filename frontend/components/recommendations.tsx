@@ -24,7 +24,7 @@ const Recommendation = (prop: RecommendationProps) => {
 export const Recommendations = (props: RecommendationsProps) => {
   return (
     <div className="bg-cornsilk-200 rounded-md p-2 m-4">
-      <span>{props.title}</span>
+      <div className="flex flex-row justify-center"><em>{props.title}</em></div>
       <div className="grid grid-cols-2">
         {props.recommendations.map((recProps, ind) => (
           <Recommendation {...recProps} key={`rec-${props.key}-${ind}`} />

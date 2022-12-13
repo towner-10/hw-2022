@@ -1,2 +1,5 @@
-
+/node_modules
+Pipfile
+Pipfile.lock
+yarn.lock
 backend/guides/

@@ -12,7 +12,7 @@ class Model:
 
     def batch_pipe_gen(self, start, prompt, directory):
         results = self.pipe([prompt + " in WKHW1 Beautiful Art Style"]
-                            * self.max_per_batch, num_inference_steps=30)
+                            * self.max_per_batch, num_inference_steps=50)
         nsfw = results.nsfw_content_detected
         images = results.images
 

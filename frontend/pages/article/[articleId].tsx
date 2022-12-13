@@ -1,9 +1,8 @@
-import { GetServerSideProps } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { Loader } from "../../components/loader";
-import { createRef, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   RecommendationProps,
   Recommendations,
@@ -11,7 +10,7 @@ import {
 import { WikihowStep, WikihowStepProps } from "../../components/wikihow-step";
 
 // Each key will be present in all of image/paragraphs/steps.
-interface GuideReturnResponse {
+export interface GuideReturnResponse {
   title: string;
   images: {
     [key: string]: {
@@ -57,19 +56,17 @@ const processGuideReturnResponse = (res: GuideReturnResponse, id: string): Artic
       const steps = Object.entries(sectionSteps)
         .filter(([_, val]) => !isEmptyObject(val))
         .map(([stepKey, stepValue]) => {
-
+          const no_images = isEmptyObject(res.images)
           const image_file = res?.finished ? res?.images[stepKey] || "output_1.png" : undefined;
 
           const step: WikihowStepProps = {
             section: `${sectionKey}.${stepKey}`,
             sectionTitle: stepValue,
             paragraph: res?.paragraphs?.[sectionKey]?.[stepKey] || undefined,
-            imageUrl: res?.finished ? `${process.env.NEXT_PUBLIC_API_URL}/api/guide/${id}/${image_file}` : undefined,
+            imageUrl: (res?.finished && !no_images) ? `${process.env.NEXT_PUBLIC_API_URL}/api/guide/${id}/${image_file}` : undefined,
           };
 
           if (res.finished && isEmptyObject(res?.paragraphs)) step.display = false;
-          if (res.finished && isEmptyObject(res?.images)) step.display = false;
-
           if (res.finished && (res.paragraphs[sectionKey] === undefined || res.paragraphs[sectionKey][stepKey] === undefined)) step.display = false;
 
           return step;
@@ -105,6 +102,8 @@ export default function Article() {
               if (json.response && json.response.finished == true) clearInterval(intervalRef.current);
               setData(processGuideReturnResponse(json.response, articleId as string));
             }
+          }).catch(() => {
+            console.log("Could not fetch");
           });
       }
     }, 2000);
@@ -134,6 +133,8 @@ export default function Article() {
           });
           setRecommendations(json.response);
         }
+      }).catch(() => {
+        console.log("Could not fetch");
       });
   }, []);
 
@@ -189,7 +190,7 @@ export default function Article() {
         <title>{`WikiNow - ${data.title}`}</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="bg-cornsilk-400 flex flex-col items-center justify-center pt-4">
+      <div className="bg-cornsilk-400 flex flex-col min-h-screen items-center justify-center pt-4">
         <Link
           href="/"
           className="text-2xl h-12 underline transition-all duration-75 hover:text-patrick-blue-400 hover:scale-110"

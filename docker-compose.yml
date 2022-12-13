@@ -1,0 +1,24 @@
+version: '3'
+
+services:
+  web:
+    image: node:16-alpine
+    volumes:
+      - .:/frontend
+    working_dir: /frontend
+    command: sh -c "yarn install && yarn run dev"
+    ports:
+      - 3000:3000
+  backend:
+    image: python:3.9-alpine
+    volumes:
+      - .:/backend
+    working_dir: /backend
+    command: sh -c "pip3 install pipenv && pipenv install && pipenv run python3 wikiAPI/waitress-server.py"
+    ports:
+      - 8080:8080
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
