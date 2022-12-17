@@ -137,7 +137,7 @@ class CoHereClient:
             steps[0][i][j])
         try:
             response = self.co.generate(
-                model='f7cf93f1-5087-4b62-b4f0-71f59d91c8b7-ft',
+                model='c156d6c7-6282-4aa2-aabc-2816ecd3ea43-ft',
                 prompt=prompt,
                 max_tokens=100,
                 temperature=0.9,
@@ -151,7 +151,8 @@ class CoHereClient:
                 print(f"No paragraph response for step {i}.{j}")
             else:
                 paragraph = format(response.generations[0].text)
-                paragraph = paragraph.replace('**', '').replace('\n', '').replace('-', '')
+                paragraph = paragraph.replace(
+                    '**', '').replace('\n', '').replace('-', '')
                 self.threaded_paragraphs[i][j] = paragraph
         except cohere.CohereError as e:
             print(e.message)
