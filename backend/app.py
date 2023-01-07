@@ -10,7 +10,6 @@ app = Flask(__name__)
 CORS(app)
 client = CoHereClient(os.environ["API_TOKEN"])
 
-
 @app.get('/')
 def index():
     return "Hello World"

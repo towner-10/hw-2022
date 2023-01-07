@@ -9,7 +9,6 @@ if os.environ["IMAGE_GEN"] == "True":
     from wikiAPI.image_gen import Model
     modelGen = Model(os.environ["MODEL_ID"])
 
-
 def parse_steps(rawText):
     current_part = 0
     steps = {
