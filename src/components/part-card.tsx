@@ -1,4 +1,4 @@
-import { Disclosure } from "@headlessui/react";
+import { Disclosure, Transition } from "@headlessui/react";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import { type SubStep, type Step } from "@prisma/client";
 
@@ -22,12 +22,12 @@ const StepCard = (props: StepCardProps) => {
         return (
           <Disclosure key={substep.id}>
             {({ open }) => (
-              <>
+              <div className="py-2">
                 <Disclosure.Button
                   className={
                     open
-                      ? "flex w-full flex-row items-center justify-between py-2"
-                      : "flex w-full flex-row items-center justify-between border-b-2 py-2"
+                      ? "flex w-full flex-row items-center justify-between p-2 border-2 border-gin_fizz-500 rounded-lg transition-colors duration-150 hover:border-port_gore-100"
+                      : "flex w-full flex-row items-center justify-between border-x-2 border-x-gin_fizz-500 border-t-2 border-b-2 border-t-gin_fizz-500 border-port_gore-100 p-2 transition-colors duration-150 rounded-lg hover:border-port_gore-100 hover:border-2"
                   }
                 >
                   <p>{substep.text}</p>
@@ -36,15 +36,25 @@ const StepCard = (props: StepCardProps) => {
                     width={16}
                     className={
                       open
-                        ? "rotate-90 transform text-port_gore-500"
-                        : "text-port_gore-500"
+                        ? "rotate-90 transform duration-200 text-port_gore-500"
+                        : "rotate-0 transform duration-200 text-port_gore-500"
                     }
                   />
                 </Disclosure.Button>
-                <Disclosure.Panel className="rounded-lg bg-port_gore-100 p-4 text-port_gore-400">
-                  {substep.paragraph}
-                </Disclosure.Panel>
-              </>
+                <Transition
+                  show={open}
+                  enter="transition duration-200 ease-out"
+                  enterFrom="transform scale-95 opacity-0"
+                  enterTo="transform scale-100 opacity-100"
+                  leave="transition duration-100 ease-out"
+                  leaveFrom="transform scale-100 opacity-100"
+                  leaveTo="transform scale-95 opacity-0"
+                >
+                  <Disclosure.Panel static className="rounded-lg bg-port_gore-100 p-4 text-port_gore-400">
+                    {substep.paragraph}
+                  </Disclosure.Panel>
+                </Transition>
+              </div>
             )}
           </Disclosure>
         );

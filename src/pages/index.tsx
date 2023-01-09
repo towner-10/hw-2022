@@ -6,12 +6,17 @@ import { api } from "../utils/api";
 import { PrimaryIconButton } from "../components/buttons";
 import { Toaster } from "react-hot-toast";
 import Head from "next/head";
+import Error from "../components/error";
 import NewGuide from "../components/new-guide";
 import GuideCard from "../components/guide-card";
 
 const Home: NextPage = () => {
   const [isShowing, setIsShowing] = useState(false);
   const guides = api.guides.getTopGuides.useQuery();
+
+  if (guides.status === "error") {
+    return <Error />;
+  }
 
   return (
     <>
