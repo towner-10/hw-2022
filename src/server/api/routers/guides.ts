@@ -21,8 +21,7 @@ export const guidesRouter = createTRPCRouter({
       const cohereSteps = (
         await generateSteps(input.title)
       ).body.generations[0]?.text.split("\n");
-
-      console.log(cohereSteps);
+      console.log("Steps generated for " + input.title);
 
       (async () => {
         if (cohereSteps === undefined) return;

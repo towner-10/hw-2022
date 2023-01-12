@@ -26,8 +26,8 @@ const StepCard = (props: StepCardProps) => {
                 <Disclosure.Button
                   className={
                     open
-                      ? "flex w-full flex-row items-center justify-between p-2 border-2 border-gin_fizz-500 rounded-lg transition-colors duration-150 hover:border-port_gore-100"
-                      : "flex w-full flex-row items-center justify-between border-x-2 border-x-gin_fizz-500 border-t-2 border-b-2 border-t-gin_fizz-500 border-port_gore-100 p-2 transition-colors duration-150 rounded-lg hover:border-port_gore-100 hover:border-2"
+                      ? "flex w-full flex-row items-center justify-between rounded-lg border-2 border-gin_fizz-500 p-2 transition-colors duration-150 hover:border-port_gore-100"
+                      : "flex w-full flex-row items-center justify-between rounded-lg border-x-2 border-t-2 border-b-2 border-port_gore-100 border-x-gin_fizz-500 border-t-gin_fizz-500 p-2 transition-colors duration-150 hover:border-2 hover:border-port_gore-100"
                   }
                 >
                   <p>{substep.text}</p>
@@ -36,8 +36,8 @@ const StepCard = (props: StepCardProps) => {
                     width={16}
                     className={
                       open
-                        ? "rotate-90 transform duration-200 text-port_gore-500"
-                        : "rotate-0 transform duration-200 text-port_gore-500"
+                        ? "rotate-90 transform text-port_gore-500 duration-200"
+                        : "rotate-0 transform text-port_gore-500 duration-200"
                     }
                   />
                 </Disclosure.Button>
@@ -50,7 +50,10 @@ const StepCard = (props: StepCardProps) => {
                   leaveFrom="transform scale-100 opacity-100"
                   leaveTo="transform scale-95 opacity-0"
                 >
-                  <Disclosure.Panel static className="rounded-lg bg-port_gore-100 p-4 text-port_gore-400">
+                  <Disclosure.Panel
+                    static
+                    className="rounded-lg bg-port_gore-100 p-4 text-port_gore-400"
+                  >
                     {substep.paragraph}
                   </Disclosure.Panel>
                 </Transition>

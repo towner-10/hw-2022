@@ -34,7 +34,6 @@ const NewGuide = () => {
       {
         loading: "Creating new guide...",
         success: (result) => {
-          console.log(result);
           router.push(`/guide/${result.id}`);
           return "Created new guide!";
         },
@@ -56,6 +55,9 @@ const NewGuide = () => {
           onChange={(event) => {
             if (isEmpty) setIsEmpty(false);
             setTitle(event.target.value);
+          }}
+          onKeyDown={async (event) => {
+            if (event.key === "Enter") await handleCreateGuide();
           }}
           className="border-b-2 border-black bg-transparent outline-none"
         ></input>
