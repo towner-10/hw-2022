@@ -1,3 +1,4 @@
+Devpost: https://devpost.com/software/wikinow
 ## Inspiration
 We have all been there, stuck on a task, with no one to turn to for help. We all love wikiHow but there isn't always a convenient article there for you to follow. So we decided to do something about it! What if we could leverage the knowledge of the entire internet to get the nicely formatted and entertaining tutorials we need. That's why we created wikiNow. With the power of Cohere's natural language processing and stable diffusion, we can combine the intelligence of millions of people to get the tutorials we need.
 
